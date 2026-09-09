@@ -12,7 +12,7 @@ to a platform-agnostic bibliography **token domain**.
 
 ## Targets
 
-| Target | Backend                                                                       | Status |
-|--------|-------------------------------------------------------------------------------|--------|
-| JVM    | [citeproc-java](https://github.com/michel-kraemer/citeproc-java) (Apache-2.0) | WIP    |
-| WASM   | TBD                                                                           | TBD    |
+| Target | Backend                                                                       | Formats                              | Status |
+|--------|-------------------------------------------------------------------------------|--------------------------------------|--------|
+| JVM    | [citeproc-java](https://github.com/michel-kraemer/citeproc-java) (Apache-2.0) | BibTeX, CSL JSON, YAML, EndNote, RIS | WIP    |
+| WASM   | TBD                                                                           | TBD                                  | TBD    |

@@ -29,15 +29,16 @@ public interface Bibliographer {
      * (e.g. `[1]`, `[1, 2]`, or `(Einstein, 1905; Hawking, 1988)`).
      *
      * @param citationKeys the keys of the cited entries
-     * @return the formatted citation, or an empty list if the processor produced no output
+     * @return the formatted citation, or `null` if the processor produced no output
+     *         (e.g. none of the keys appear in [this.citationKeys])
      */
-    public fun citation(citationKeys: List<String>): List<BibliographyToken>
+    public fun citation(citationKeys: List<String>): List<BibliographyToken>?
 }
 
 /**
  * Formats the in-text citation for a single entry.
  * @param citationKey the key of the cited entry
- * @return the formatted citation, or an empty list if the processor produced no output
+ * @return the formatted citation, or `null` if the processor produced no output
  * @see Bibliographer.citation
  */
-public fun Bibliographer.citation(citationKey: String): List<BibliographyToken> = citation(listOf(citationKey))
+public fun Bibliographer.citation(citationKey: String): List<BibliographyToken>? = citation(listOf(citationKey))

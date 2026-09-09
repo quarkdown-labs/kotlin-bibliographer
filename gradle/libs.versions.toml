@@ -1,6 +1,7 @@
 [versions]
 kotlin = "2.4.20"
 citeproc-java = "3.5.2"
+citationstyles = "26.2"
 ktlint = "14.2.0"
 ktlint-engine = "1.8.0"
 maven-publish = "0.37.0"
@@ -8,6 +9,8 @@ maven-publish = "0.37.0"
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 citeproc-java = { module = "de.undercouch:citeproc-java", version.ref = "citeproc-java" }
+csl-locales = { module = "org.citationstyles:locales", version.ref = "citationstyles" }
+csl-styles = { module = "org.citationstyles:styles", version.ref = "citationstyles" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

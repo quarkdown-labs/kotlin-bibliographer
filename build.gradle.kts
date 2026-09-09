@@ -19,6 +19,10 @@ kotlin {
         }
         jvmMain.dependencies {
             api(libs.citeproc.java)
+            runtimeOnly(libs.csl.locales)
+        }
+        jvmTest.dependencies {
+            implementation(libs.csl.styles)
         }
     }
 }
