@@ -1,17 +1,17 @@
 package com.quarkdown.bibliographer.citeproc
 
 import com.quarkdown.bibliographer.token.BibliographyToken
-import com.quarkdown.bibliographer.token.TextFormat
+import com.quarkdown.bibliographer.token.BibliographyToken.Link
+import com.quarkdown.bibliographer.token.BibliographyToken.Text
 import de.undercouch.citeproc.csl.internal.TokenBuffer
-import de.undercouch.citeproc.csl.internal.behavior.FormattingAttributes
 import de.undercouch.citeproc.csl.internal.token.TextToken
 
 /**
  * Converts [citeproc-java](https://github.com/michel-kraemer/citeproc-java)
  * [TokenBuffer] tokens into platform-agnostic [BibliographyToken]s.
  *
- * This is the core of the JVM bridge: formatting attributes (italic, bold, small caps)
- * map to [TextFormat], and URL/DOI tokens map to [BibliographyToken.Link].
+ * This is the core of the JVM bridge: formatting attributes map to
+ * [BibliographyToken.Formatted] decorators, and URL/DOI tokens map to [Link]s.
  *
  * @param urlResolver resolves raw URL/DOI text into target URLs
  *                    (e.g. prepending `https://doi.org/` to DOIs)
@@ -60,24 +60,11 @@ public class CiteprocTokenConverter(
         when (token.type) {
             TextToken.Type.URL, TextToken.Type.DOI -> {
                 val url = urlResolver.resolve(token.text, token.type)
-                BibliographyToken.Link(
-                    url = url,
-                    label = BibliographyToken.Text(url, token.formattingAttributes.toTextFormat()),
-                )
+                Link(url = url, label = Text(url).decoratedWith(token.formattingAttributes))
             }
 
             else -> {
-                BibliographyToken.Text(token.text, token.formattingAttributes.toTextFormat())
+                Text(token.text).decoratedWith(token.formattingAttributes)
             }
         }
 }
-
-/**
- * Maps a citeproc-java [FormattingAttributes] bitmask to a [TextFormat].
- */
-private fun Int.toTextFormat(): TextFormat =
-    TextFormat(
-        italic = FormattingAttributes.getFontStyle(this) == FormattingAttributes.FS_ITALIC,
-        bold = FormattingAttributes.getFontWeight(this) == FormattingAttributes.FW_BOLD,
-        smallCaps = FormattingAttributes.getFontVariant(this) == FormattingAttributes.FV_SMALLCAPS,
-    )

@@ -1,7 +1,10 @@
 package com.quarkdown.bibliographer.citeproc
 
-import com.quarkdown.bibliographer.token.BibliographyToken
-import com.quarkdown.bibliographer.token.TextFormat
+import com.quarkdown.bibliographer.token.BibliographyToken.Bold
+import com.quarkdown.bibliographer.token.BibliographyToken.Italic
+import com.quarkdown.bibliographer.token.BibliographyToken.Link
+import com.quarkdown.bibliographer.token.BibliographyToken.SmallCaps
+import com.quarkdown.bibliographer.token.BibliographyToken.Text
 import de.undercouch.citeproc.csl.internal.TokenBuffer
 import de.undercouch.citeproc.csl.internal.behavior.FormattingAttributes
 import de.undercouch.citeproc.csl.internal.token.TextToken
@@ -33,10 +36,28 @@ class CiteprocTokenConverterTest {
 
         assertEquals(
             listOf(
-                BibliographyToken.Text("Relativity", TextFormat(italic = true)),
-                BibliographyToken.Text(", "),
-                BibliographyToken.Text("Einstein", TextFormat(bold = true)),
+                Italic(Text("Relativity")),
+                Text(", "),
+                Bold(Text("Einstein")),
             ),
+            converter.convert(buffer),
+        )
+    }
+
+    @Test
+    fun `nests decorators innermost-first`() {
+        val attributes =
+            FormattingAttributes.merge(
+                FormattingAttributes.merge(
+                    FormattingAttributes.ofFontStyle(FormattingAttributes.FS_ITALIC),
+                    FormattingAttributes.ofFontWeight(FormattingAttributes.FW_BOLD),
+                ),
+                FormattingAttributes.ofFontVariant(FormattingAttributes.FV_SMALLCAPS),
+            )
+        val buffer = buffer(TextToken("Everything", TextToken.Type.TEXT, attributes))
+
+        assertEquals(
+            listOf(SmallCaps(Bold(Italic(Text("Everything"))))),
             converter.convert(buffer),
         )
     }
@@ -46,7 +67,7 @@ class CiteprocTokenConverterTest {
         val buffer = buffer(TextToken("10.1000/xyz123", TextToken.Type.DOI))
 
         assertEquals(
-            listOf(BibliographyToken.Link("https://doi.org/10.1000/xyz123")),
+            listOf(Link("https://doi.org/10.1000/xyz123")),
             converter.convert(buffer),
         )
     }
@@ -60,9 +81,9 @@ class CiteprocTokenConverterTest {
 
         assertEquals(
             listOf(
-                BibliographyToken.Link(
+                Link(
                     url = "https://example.com",
-                    label = BibliographyToken.Text("https://example.com", TextFormat(italic = true)),
+                    label = Italic(Text("https://example.com")),
                 ),
             ),
             converter.convert(buffer),
@@ -78,7 +99,7 @@ class CiteprocTokenConverterTest {
             )
 
         assertEquals(
-            listOf(BibliographyToken.Text("content")),
+            listOf(Text("content")),
             converter.convert(buffer),
         )
     }
