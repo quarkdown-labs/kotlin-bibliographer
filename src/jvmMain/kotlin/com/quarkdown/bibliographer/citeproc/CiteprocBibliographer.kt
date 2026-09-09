@@ -22,6 +22,7 @@ import java.io.InputStream
  * @param locale optional [RFC 4646](https://www.rfc-editor.org/rfc/rfc4646) locale tag
  *               (e.g. `"en-US"`, `"de-DE"`), controlling localized terms.
  *               When `null`, the style's default locale is used, falling back to `"en-US"`
+ * @throws java.io.IOException if the style cannot be loaded or parsed
  */
 public class CiteprocBibliographer(
     style: String,
@@ -38,23 +39,23 @@ public class CiteprocBibliographer(
 
     override val citationKeys: List<String> = provider.ids.toList()
 
+    private val registeredKeys: Set<String> = citationKeys.toSet()
+
     /**
      * Lazily formatted entries: triggering this value calls [CSL.makeBibliography],
      * which invokes [TokenCollectingFormat.doFormatBibliographyEntry] for each entry
-     * sequentially. The accumulated results are then matched to [citationKeys] by position.
+     * sequentially, in the order dictated by the style's sorting rules.
      */
     private val formattedEntries: List<FormattedEntry> by lazy {
         format.collectedEntries.clear()
         csl.makeBibliography()
-        citationKeys.zip(format.collectedEntries) { citationKey, (label, content) ->
-            FormattedEntry(citationKey, label, content)
-        }
+        format.collectedEntries.toList()
     }
 
     override fun bibliography(): List<FormattedEntry> = formattedEntries
 
     override fun citation(citationKeys: List<String>): List<BibliographyToken>? {
-        val knownKeys = citationKeys.filter(this.citationKeys.toSet()::contains)
+        val knownKeys = citationKeys.filter(registeredKeys::contains)
         if (knownKeys.isEmpty()) return null
 
         csl.makeCitation(*knownKeys.toTypedArray())
@@ -70,6 +71,8 @@ public class CiteprocBibliographer(
          * @param filename the filename hint for format detection
          * @param locale optional RFC 4646 locale tag
          * @return a new [CiteprocBibliographer] over the file's entries
+         * @throws java.io.IOException if the bibliography source cannot be read or parsed,
+         *                             or if the style cannot be loaded or parsed
          */
         public fun from(
             style: String,

@@ -31,7 +31,30 @@ class CiteprocBibliographerTest {
             .issued(1988)
             .build()
 
+    private val zwicky: CSLItemData =
+        CSLItemDataBuilder()
+            .id("zwicky1933")
+            .type(CSLType.ARTICLE_JOURNAL)
+            .title("Die Rotverschiebung von extragalaktischen Nebeln")
+            .author("Fritz", "Zwicky")
+            .issued(1933)
+            .containerTitle("Helvetica Physica Acta")
+            .build()
+
     private fun bibliographer(style: String): CiteprocBibliographer = CiteprocBibliographer(style, ListItemDataProvider(einstein, hawking))
+
+    @Test
+    fun `sorting styles keep keys matched to their entries`() {
+        // APA sorts entries alphabetically by author, while the source order is reversed here.
+        val bibliographer = CiteprocBibliographer("apa", ListItemDataProvider(zwicky, hawking, einstein))
+
+        val bibliography = bibliographer.bibliography()
+        assertEquals(listOf("einstein1905", "hawking1988", "zwicky1933"), bibliography.map { it.citationKey })
+        bibliography.forEach { entry ->
+            val author = entry.citationKey.takeWhile { it.isLetter() }
+            assertContains(entry.content.toPlainText().lowercase(), author)
+        }
+    }
 
     @Test
     fun `citation keys are exposed in source order`() {

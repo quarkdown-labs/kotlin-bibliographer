@@ -9,8 +9,9 @@ import com.quarkdown.bibliographer.token.BibliographyToken
  */
 public interface Bibliographer {
     /**
-     * The citation keys of all entries in the bibliography source,
-     * in bibliography order.
+     * The citation keys of all entries, in bibliography source order.
+     * Note that [bibliography] entries may follow a different order,
+     * as defined by the style's sorting rules.
      */
     public val citationKeys: List<String>
 
