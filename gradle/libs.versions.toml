@@ -1,0 +1,15 @@
+[versions]
+kotlin = "2.4.20"
+citeproc-java = "3.5.2"
+ktlint = "14.2.0"
+ktlint-engine = "1.8.0"
+maven-publish = "0.37.0"
+
+[libraries]
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+citeproc-java = { module = "de.undercouch:citeproc-java", version.ref = "citeproc-java" }
+
+[plugins]
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish" }

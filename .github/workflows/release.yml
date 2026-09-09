@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags: [v*]
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    name: Publish to Maven Central
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Bumps version.txt, turns the changelog's [Unreleased] section into a dated
+      # release section, commits both to main, and publishes the GitHub release
+      # with the extracted notes.
+      - name: Release
+        uses: iamgio/simple-release@v1
+        with:
+          version-file: version.txt
+          changelog-file: CHANGELOG.md
+          commit: 'true'
+
+      # Publishes the version now recorded in version.txt.
+      - name: Publish to Maven Central
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryPassword: ${{ secrets.SIGNING_PASSWORD }}
+        run: ./gradlew --no-daemon publishAndReleaseToMavenCentral --stacktrace
