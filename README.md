@@ -19,7 +19,7 @@ to a platform-agnostic bibliography **token domain**.
 
 ```kotlin
 dependencies {
-    implementation("com.quarkdown.bibliographer:bibliographer:<version>")
+    implementation("com.quarkdown.bibliographer:bibliographer:0.2.2")
 }
 ```
 

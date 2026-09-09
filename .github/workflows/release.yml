@@ -18,6 +18,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full tag history, required by replace-version-in-files
+          # to determine the previous release version.
+          fetch-depth: 0
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -36,6 +40,7 @@ jobs:
         with:
           version-file: version.txt
           changelog-file: CHANGELOG.md
+          replace-version-in-files: README.md
           commit: 'true'
 
       # Publishes the version now recorded in version.txt.
