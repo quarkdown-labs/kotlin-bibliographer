@@ -19,7 +19,7 @@ to a platform-agnostic bibliography **token domain**.
 
 ```kotlin
 dependencies {
-    implementation("com.quarkdown.bibliographer:bibliographer:0.2.2")
+    implementation("com.quarkdown.bibliographer:bibliographer:0.3.0")
 }
 ```
 
@@ -48,16 +48,16 @@ bibliographer.bibliography().forEach { entry ->
 }
 ```
 
-Formatting is expressed by decorated composition, so mapping tokens
-to your own domain is a small match:
+Formatting is expressed by decorated composition, and mapping tokens
+to your own domain is a recursive match:
 
 ```kotlin
-fun render(token: BibliographyToken): MyNode =
+fun convert(token: BibliographyToken): MyNode =
     when (token) {
         is Text -> MyText(token.text)
-        is Link -> MyLink(url = token.url, label = render(token.label))
-        is Italic -> MyEmphasis(render(token.token))
-        is Bold -> MyStrong(render(token.token))
+        is Link -> MyLink(url = token.url, label = convert(token.label))
+        is Italic -> MyEmphasis(convert(token.token))
+        is Bold -> MyStrong(convert(token.token))
         // ...
     }
 ```
