@@ -14,3 +14,50 @@ to a platform-agnostic bibliography **token domain**.
 |--------|-------------------------------------------------------------------------------|--------------------------------------|--------|
 | JVM    | [citeproc-java](https://github.com/michel-kraemer/citeproc-java) (Apache-2.0) | BibTeX, CSL JSON, YAML, EndNote, RIS | WIP    |
 | WASM   | TBD                                                                           | TBD                                  | TBD    |
+
+## Getting started
+
+```kotlin
+dependencies {
+    implementation("com.quarkdown.bibliographer:bibliographer:<version>")
+}
+```
+
+```kotlin
+val bibliographer =
+    Bibliographer(
+        style = "ieee",
+        source =
+            BibliographySource(
+                File("references.bib").readText(),
+                BibliographyFormat.BIBTEX,
+            ),
+    )
+```
+
+Render in-text citations and the bibliography as tokens:
+
+```kotlin
+// [Text("[1]")], or null if the key is unknown.
+bibliographer.citation("einstein1905")
+
+bibliographer.bibliography().forEach { entry ->
+    entry.citationKey // "einstein1905"
+    entry.label       // "[1]" for numbered styles
+    entry.content     // [Text("A. Einstein, "), Italic(Text("Zur Elektrodynamik...")), ...]
+}
+```
+
+Formatting is expressed by decorated composition, so mapping tokens
+to your own domain is a small match:
+
+```kotlin
+fun render(token: BibliographyToken): MyNode =
+    when (token) {
+        is Text -> MyText(token.text)
+        is Link -> MyLink(url = token.url, label = render(token.label))
+        is Italic -> MyEmphasis(render(token.token))
+        is Bold -> MyStrong(render(token.token))
+        // ...
+    }
+```

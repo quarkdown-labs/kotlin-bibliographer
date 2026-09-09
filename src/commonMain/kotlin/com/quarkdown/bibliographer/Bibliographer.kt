@@ -5,7 +5,7 @@ import com.quarkdown.bibliographer.token.BibliographyToken
 /**
  * The library's main entry point: renders citations and bibliographies
  * for a fixed bibliography source, style and locale,
- * delegating processing to a platform-specific CSL processor.
+ * delegating processing to a platform-specific CSL processor, thread-safely.
  */
 public interface Bibliographer {
     /**
@@ -31,7 +31,6 @@ public interface Bibliographer {
      *
      * @param citationKeys the keys of the cited entries
      * @return the formatted citation, or `null` if the processor produced no output
-     *         (e.g. none of the keys appear in [this.citationKeys])
      */
     public fun citation(citationKeys: List<String>): List<BibliographyToken>?
 }

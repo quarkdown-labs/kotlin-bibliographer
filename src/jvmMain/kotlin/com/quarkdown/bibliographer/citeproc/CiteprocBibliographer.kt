@@ -52,8 +52,10 @@ public class CiteprocBibliographer(
         format.collectedEntries.toList()
     }
 
+    @Synchronized
     override fun bibliography(): List<FormattedEntry> = formattedEntries
 
+    @Synchronized
     override fun citation(citationKeys: List<String>): List<BibliographyToken>? {
         val knownKeys = citationKeys.filter(registeredKeys::contains)
         if (knownKeys.isEmpty()) return null
