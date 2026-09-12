@@ -2,14 +2,30 @@
 # Rebuilds the wasm binary and re-vendors the npm-shaped `hayagriva-wasm`
 # package consumed by the Kotlin/JS (wasmJs) target.
 #
-# Non-interactive; must run identically on macOS (dev) and Linux (CI).
-#
-# Output is meant to be byte-identical across runs on the same crate
-# version/toolchain: a CI drift check diffs the vendored package directory
-# against what is committed, so nothing here should embed a timestamp,
-# absolute path, or other non-reproducible value.
+# Non-interactive. Output is meant to be byte-identical across runs and
+# machines: a CI drift check diffs the vendored package directory against
+# what is committed, so nothing here may embed a timestamp, absolute path,
+# or other non-reproducible value.
 set -euo pipefail
 cd "$(dirname "$0")"
+
+# Linux is the authoritative build platform: rustc's output is deterministic
+# per host platform but not across platforms (constant ordering differs
+# between e.g. macOS-arm64 and Linux-x64 hosts), and the CI drift check
+# rebuilds on Linux. On any other system, delegate the whole run to a pinned
+# Linux container so local regeneration produces the exact bytes CI expects.
+if [ "$(uname -s)" != "Linux" ]; then
+    command -v docker >/dev/null 2>&1 || {
+        echo "regenerate.sh: building the binding requires Linux; install Docker so the build can run in a container." >&2
+        exit 1
+    }
+    repo_root="$(cd .. && pwd)"
+    exec docker run --rm --platform linux/amd64 \
+        -v "$repo_root":/work -w /work/hayagriva-wasm \
+        -e CARGO_TARGET_DIR=/work/hayagriva-wasm/target/container \
+        -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/work \
+        rust:1.92.0 ./regenerate.sh "$@"
+fi
 
 # `--check` additionally verifies (after regenerating) that the vendored
 # package matches what is committed — the CI drift check. Keeping the check
@@ -37,10 +53,22 @@ if command -v wasm-pack >/dev/null 2>&1; then
     installed_wasm_pack_version="$(wasm-pack --version | awk '{print $2}')"
 fi
 if [ "$installed_wasm_pack_version" != "$WASM_PACK_VERSION" ]; then
-    cargo install wasm-pack --version "$WASM_PACK_VERSION" --locked
+    # The prebuilt musl binary installs in seconds where available (Linux
+    # x86_64 — both CI and the container above); `cargo install` compiles
+    # for minutes and is only the fallback.
+    if [ "$(uname -m)" = "x86_64" ]; then
+        tarball="wasm-pack-v$WASM_PACK_VERSION-x86_64-unknown-linux-musl"
+        curl -sSfL "https://github.com/rustwasm/wasm-pack/releases/download/v$WASM_PACK_VERSION/$tarball.tar.gz" |
+            tar -xz -C "${CARGO_HOME:-$HOME/.cargo}/bin" --strip-components=1 "$tarball/wasm-pack"
+    else
+        cargo install wasm-pack --version "$WASM_PACK_VERSION" --locked
+    fi
 fi
 
 # --- 2. Build -----------------------------------------------------------
+# rustc embeds absolute source paths into the binary; remap them to fixed
+# virtual roots so the output is byte-identical across machines.
+export RUSTFLAGS="${RUSTFLAGS:-} --remap-path-prefix=${CARGO_HOME:-$HOME/.cargo}=/cargo --remap-path-prefix=$PWD=/build"
 # `--no-pack` skips wasm-pack's own package.json generation: that output
 # embeds the installed wasm-pack version and isn't shaped the way we need
 # (no "type": "module", no loader.mjs entry point), so it would both be
