@@ -38,3 +38,6 @@ build/
 
 # macOS
 .DS_Store
+
+# Development process documents
+docs/superpowers/

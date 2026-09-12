@@ -1,0 +1,46 @@
+name: Hayagriva crate
+
+on:
+  push:
+    paths:
+      - 'hayagriva-wasm/**'
+      - 'src/wasmJsMain/npm/hayagriva-wasm/**'
+  pull_request:
+    paths:
+      - 'hayagriva-wasm/**'
+      - 'src/wasmJsMain/npm/hayagriva-wasm/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: hayagriva-wasm
+
+      - name: Run native tests
+        run: cargo test --manifest-path hayagriva-wasm/Cargo.toml
+
+      # Compares rendered outputs for drifts.
+      - name: Verify vendored binding is functionally current
+        run: |
+          cp -r src/wasmJsMain/npm/hayagriva-wasm "$RUNNER_TEMP/committed-binding"
+          ./hayagriva-wasm/regenerate.sh
+          node hayagriva-wasm/check-binding.mjs "$RUNNER_TEMP/committed-binding" src/wasmJsMain/npm/hayagriva-wasm
+
+      - name: Upload artifacts (manual runs)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hayagriva-binding
+          path: src/wasmJsMain/npm/hayagriva-wasm/

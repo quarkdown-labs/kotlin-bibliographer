@@ -3,6 +3,7 @@ package com.quarkdown.bibliographer.citeproc
 import com.quarkdown.bibliographer.Bibliographer
 import com.quarkdown.bibliographer.FormattedEntry
 import com.quarkdown.bibliographer.citeproc.CiteprocBibliographer.Companion.from
+import com.quarkdown.bibliographer.knownCitationKeys
 import com.quarkdown.bibliographer.token.BibliographyToken
 import de.undercouch.citeproc.BibliographyFileReader
 import de.undercouch.citeproc.CSL
@@ -57,8 +58,7 @@ public class CiteprocBibliographer(
 
     @Synchronized
     override fun citation(citationKeys: List<String>): List<BibliographyToken>? {
-        val knownKeys = citationKeys.filter(registeredKeys::contains)
-        if (knownKeys.isEmpty()) return null
+        val knownKeys = knownCitationKeys(citationKeys, registeredKeys) ?: return null
 
         csl.makeCitation(*knownKeys.toTypedArray())
         return format.lastCitationResult.takeIf { it.isNotEmpty() }

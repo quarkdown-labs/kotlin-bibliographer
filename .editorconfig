@@ -13,3 +13,8 @@ indent_size = 2
 
 [*.bat]
 end_of_line = crlf
+
+# Embeds CSL styles as machine-converted string constants.
+[**/TestStyles.kt]
+ktlint = disabled
+max_line_length = unset

@@ -42,3 +42,17 @@ public interface Bibliographer {
  * @see Bibliographer.citation
  */
 public fun Bibliographer.citation(citationKey: String): List<BibliographyToken>? = citation(listOf(citationKey))
+
+/**
+ * Filters [requested] citation keys down to those present in [registered], preserving order.
+ *
+ * This is the shared front half of every [Bibliographer.citation] implementation:
+ * unknown keys are silently ignored, and a request that matches no known key
+ * produces no output (`null`) rather than an error.
+ *
+ * @return the known keys, or `null` if none of [requested] are registered
+ */
+internal fun knownCitationKeys(
+    requested: List<String>,
+    registered: Set<String>,
+): List<String>? = requested.filter(registered::contains).takeIf { it.isNotEmpty() }
