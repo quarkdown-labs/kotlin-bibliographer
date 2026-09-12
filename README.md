@@ -10,10 +10,10 @@ to a platform-agnostic bibliography **token domain**.
 
 ## Targets
 
-| Target | Backend                                                                       | Formats                              | Status |
-|--------|-------------------------------------------------------------------------------|--------------------------------------|--------|
-| JVM    | [citeproc-java](https://github.com/michel-kraemer/citeproc-java) (Apache-2.0) | BibTeX, CSL JSON, YAML, EndNote, RIS | WIP    |
-| WASM   | TBD                                                                           | TBD                                  | TBD    |
+| Target | Backend                                                                             | Formats                              | Status       |
+|--------|-------------------------------------------------------------------------------------|--------------------------------------|--------------|
+| JVM    | [citeproc-java](https://github.com/michel-kraemer/citeproc-java) (Java, Apache-2.0) | BibTeX, CSL JSON, YAML, EndNote, RIS | Stable       |
+| WASM   | [hayagriva](https://github.com/typst/hayagriva) (Rust, MIT/Apache-2.0)              | BibTeX, CSL JSON                     | Experimental |
 
 ## Getting started
 
@@ -61,3 +61,11 @@ fun convert(token: BibliographyToken): MyNode =
         // ...
     }
 ```
+
+## Licensing notes
+
+The WASM artifact embeds locale data from the
+[CSL locales project](https://github.com/citation-style-language/locales),
+licensed under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/); the test
+suites additionally embed the IEEE and APA styles from the
+[CSL styles project](https://github.com/citation-style-language/styles) under the same license.

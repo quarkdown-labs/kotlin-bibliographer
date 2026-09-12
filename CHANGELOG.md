@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- WASM target backed by a via [hayagriva](https://github.com/typst/hayagriva) bindings.
+
 ## [0.3.0] - 2026-09-09
 
 ## [0.2.2] - 2026-09-09

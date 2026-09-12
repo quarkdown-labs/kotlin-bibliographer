@@ -1,0 +1,11 @@
+{
+  "name": "hayagriva-wasm",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./loader.mjs",
+  "module": "./loader.mjs",
+  "exports": {
+    ".": "./loader.mjs"
+  },
+  "files": ["loader.mjs", "hayagriva_wasm.js", "hayagriva_wasm_bg.wasm", "hayagriva_wasm.d.ts", "hayagriva_wasm_bg.wasm.d.ts"]
+}

@@ -1,0 +1,48 @@
+name: Regenerate hayagriva binding
+
+on:
+  push:
+    paths:
+      - 'hayagriva-wasm/**'
+      - 'src/wasmJsMain/npm/hayagriva-wasm/**'
+  pull_request:
+    paths:
+      - 'hayagriva-wasm/**'
+      - 'src/wasmJsMain/npm/hayagriva-wasm/**'
+  workflow_dispatch:
+
+jobs:
+  drift-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      # cache-bin defaults to true, so a `cargo install`-ed wasm-pack in
+      # ~/.cargo/bin/ is cached too — only the first run pays its install cost.
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: hayagriva-wasm
+
+      # Must run before `cargo test`: build.rs requires the locale bundle
+      # this script fetches, so a fresh checkout fails cargo test otherwise.
+      # `--check` fails the job if the regenerated package differs from the
+      # committed one (the drift check lives in the script, next to its paths).
+      - name: Regenerate binding and verify no drift
+        run: ./hayagriva-wasm/regenerate.sh --check
+
+      - name: Run native tests
+        run: cargo test --manifest-path hayagriva-wasm/Cargo.toml
+
+      - name: Upload artifacts (manual runs)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hayagriva-binding
+          path: src/wasmJsMain/npm/hayagriva-wasm/
