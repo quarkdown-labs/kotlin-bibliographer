@@ -8,6 +8,7 @@ public actual fun Bibliographer(
     source: BibliographySource,
     locale: String?,
 ): Bibliographer {
+    requireCatalogStyle(style)
     val bibliographer =
         try {
             CiteprocBibliographer.from(

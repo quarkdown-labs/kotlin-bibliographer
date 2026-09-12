@@ -48,6 +48,13 @@ bibliographer.bibliography().forEach { entry ->
 }
 ```
 
+### Styles
+
+`style` accepts either a name from `StyleCatalog` — 66 popular styles
+(IEEE, APA, MLA, Chicago, Nature, ACM, …, by their [Zotero](https://www.zotero.org/styles) ids)
+guaranteed to resolve identically on every target — or the XML content of any
+CSL style definition.
+
 Formatting is expressed by decorated composition, and mapping tokens
 to your own domain is a recursive match:
 
@@ -65,7 +72,9 @@ fun convert(token: BibliographyToken): MyNode =
 ## Licensing notes
 
 The WASM artifact embeds locale data from the
-[CSL locales project](https://github.com/citation-style-language/locales),
-licensed under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/); the test
-suites additionally embed the IEEE and APA styles from the
-[CSL styles project](https://github.com/citation-style-language/styles) under the same license.
+[CSL locales project](https://github.com/citation-style-language/locales)
+and the style catalog from the
+[CSL styles project](https://github.com/citation-style-language/styles)
+(via [hayagriva](https://github.com/typst/hayagriva)'s archive), both licensed under
+[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/); the test
+suites additionally embed the IEEE and APA styles under the same license.

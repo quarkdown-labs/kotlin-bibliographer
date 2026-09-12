@@ -4,7 +4,8 @@
 
 ### Added
 
-- WASM target backed by a via [hayagriva](https://github.com/typst/hayagriva) bindings.
+- WASM target backed by [hayagriva](https://github.com/typst/hayagriva) bindings.
+- `StyleCatalog`: 66 CSL styles resolvable by name, rendering identically on every target.
 
 ## [0.3.0] - 2026-09-09
 

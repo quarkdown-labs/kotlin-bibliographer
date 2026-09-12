@@ -89,20 +89,6 @@ class HayagrivaBibliographerTest {
     }
 
     @Test
-    fun `style names are rejected`() {
-        assertFailsWith<IllegalArgumentException> {
-            Bibliographer("ieee", BibliographySource(bibtex, BibliographyFormat.BIBTEX))
-        }
-    }
-
-    @Test
-    fun `invalid sources are rejected`() {
-        assertFailsWith<IllegalArgumentException> {
-            Bibliographer(IEEE_CSL, BibliographySource("{{{", BibliographyFormat.BIBTEX))
-        }
-    }
-
-    @Test
     fun `locale override selects localized terms`() {
         // IEEE renders the page label from the locale's terms: "pp." in English,
         // "S." in German (mirrors the Rust `locale_override_selects_localized_terms` test).

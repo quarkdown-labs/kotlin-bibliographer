@@ -6,4 +6,7 @@ public actual fun Bibliographer(
     style: String,
     source: BibliographySource,
     locale: String?,
-): Bibliographer = HayagrivaBibliographer(style, source, locale)
+): Bibliographer {
+    requireCatalogStyle(style)
+    return HayagrivaBibliographer(style, source, locale)
+}

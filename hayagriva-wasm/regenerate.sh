@@ -2,9 +2,7 @@
 # Rebuilds the wasm binary and re-vendors the npm-shaped `hayagriva-wasm`
 # package consumed by the Kotlin/JS (wasmJs) target.
 #
-# Non-interactive; must run identically on macOS (dev) and Linux (CI). CI
-# must run this script before `cargo test`, because `build.rs` requires the
-# locale bundle this script fetches (see hayagriva-wasm/build.rs).
+# Non-interactive; must run identically on macOS (dev) and Linux (CI).
 #
 # Output is meant to be byte-identical across runs on the same crate
 # version/toolchain: a CI drift check diffs the vendored package directory
@@ -21,12 +19,7 @@ if [ "${1:-}" = "--check" ]; then
     CHECK=true
 fi
 
-# Pinned to a specific commit of citation-style-language/locales (rather than
-# a branch) so the locale bundle — and thus build output — does not drift
-# out from under this script when upstream publishes new locales.
-LOCALES_COMMIT="2866970c249ab8bae513b41ee6241ccdcdf967eb"
-
-# Pinned so the wasm-pack build (step 3) is reproducible across machines; verified
+# Pinned so the wasm-pack build (step 2) is reproducible across machines; verified
 # working on this machine. Bump deliberately, not implicitly via a stale cargo cache.
 WASM_PACK_VERSION="0.15.0"
 
@@ -47,20 +40,7 @@ if [ "$installed_wasm_pack_version" != "$WASM_PACK_VERSION" ]; then
     cargo install wasm-pack --version "$WASM_PACK_VERSION" --locked
 fi
 
-# --- 2. Locales, pinned ------------------------------------------------------
-# Must run before any cargo build below: build.rs fails fast if locales/ is
-# absent or empty.
-if [ ! -f "locales/.commit" ] || [ "$(cat locales/.commit)" != "$LOCALES_COMMIT" ]; then
-    rm -rf locales && mkdir locales
-    tmp=$(mktemp -d)
-    git clone --quiet https://github.com/citation-style-language/locales.git "$tmp"
-    git -C "$tmp" checkout --quiet "$LOCALES_COMMIT"
-    cp "$tmp"/locales-*.xml locales/
-    echo "$LOCALES_COMMIT" > locales/.commit
-    rm -rf "$tmp"
-fi
-
-# --- 3. Build -----------------------------------------------------------
+# --- 2. Build -----------------------------------------------------------
 # `--no-pack` skips wasm-pack's own package.json generation: that output
 # embeds the installed wasm-pack version and isn't shaped the way we need
 # (no "type": "module", no loader.mjs entry point), so it would both be
@@ -69,7 +49,7 @@ fi
 # `--release` already runs `wasm-opt` when available.
 wasm-pack build --target web --release --no-pack --out-name hayagriva_wasm
 
-# --- 4. Assemble the vendored package ---------------------------------------
+# --- 3. Assemble the vendored package ---------------------------------------
 # Start from a clean directory so a file removed from `pkg/` (e.g. a .d.ts
 # wasm-pack stops emitting in a future version) doesn't linger as stale
 # vendored cruft.

@@ -16,17 +16,18 @@ import com.quarkdown.bibliographer.token.BibliographyToken
  *
  * Current limitations of this backend:
  * - Only [BibliographyFormat.BIBTEX] and [BibliographyFormat.CSL_JSON] sources are supported.
- * - [style] must be the XML content of a CSL style definition, not a style name.
  *
  * wasmJs (and JavaScript in general) runs single-threaded, so [Bibliographer]'s
  * "thread-safely" contract is trivially satisfied here — there is no concurrent access to guard against.
  *
- * @param style the XML content of the CSL style definition
+ * @param style the XML content of a CSL style definition, or the Zotero id of a style
+ *              embedded in the binding's archive (a superset of `StyleCatalog`;
+ *              the platform factory restricts names to the catalog)
  * @param source the bibliography source
  * @param locale optional [RFC 4646](https://www.rfc-editor.org/rfc/rfc4646) locale tag.
  *               When `null`, the style's default locale is used
  * @throws IllegalArgumentException if the source format is unsupported,
- *                                  a style name is passed instead of XML content,
+ *                                  the style name is unknown,
  *                                  or the style or source cannot be parsed
  */
 public class HayagrivaBibliographer(
@@ -41,9 +42,6 @@ public class HayagrivaBibliographer(
     private val registeredKeys: Set<String>
 
     init {
-        require(style.trimStart().startsWith("<")) {
-            "The hayagriva backend requires the XML content of a CSL style definition, but found a name."
-        }
         val format =
             when (source.format) {
                 BibliographyFormat.BIBTEX -> "bibtex"

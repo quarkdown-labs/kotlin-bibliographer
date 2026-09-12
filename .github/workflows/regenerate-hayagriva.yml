@@ -30,8 +30,6 @@ jobs:
         with:
           workspaces: hayagriva-wasm
 
-      # Must run before `cargo test`: build.rs requires the locale bundle
-      # this script fetches, so a fresh checkout fails cargo test otherwise.
       # `--check` fails the job if the regenerated package differs from the
       # committed one (the drift check lives in the script, next to its paths).
       - name: Regenerate binding and verify no drift
