@@ -9,6 +9,9 @@ package com.quarkdown.bibliographer
  *               (e.g. `"en-US"`, `"de-DE"`), controlling localized terms.
  *               When `null`, the style's default locale is used
  * @return a new [Bibliographer] over the source's entries
+ * @throws IllegalArgumentException if the style or source cannot be parsed,
+ *                                  the source format is unsupported by this platform's backend,
+ *                                  or the source contains no entries
  */
 public expect fun Bibliographer(
     style: String,

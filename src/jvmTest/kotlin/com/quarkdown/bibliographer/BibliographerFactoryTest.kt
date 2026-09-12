@@ -3,6 +3,7 @@ package com.quarkdown.bibliographer
 import com.quarkdown.bibliographer.token.toPlainText
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class BibliographerFactoryTest {
     private val bibtex =
@@ -25,5 +26,35 @@ class BibliographerFactoryTest {
 
         assertEquals(listOf("einstein1905"), bibliographer.citationKeys)
         assertEquals("[1]", bibliographer.citation("einstein1905")?.toPlainText())
+    }
+
+    @Test
+    fun `unknown styles are rejected`() {
+        assertFailsWith<IllegalArgumentException> {
+            Bibliographer(
+                style = "not-an-existing-style",
+                source = BibliographySource(bibtex, BibliographyFormat.BIBTEX),
+            )
+        }
+    }
+
+    @Test
+    fun `invalid sources are rejected`() {
+        assertFailsWith<IllegalArgumentException> {
+            Bibliographer(
+                style = "ieee",
+                source = BibliographySource("{{{", BibliographyFormat.BIBTEX),
+            )
+        }
+    }
+
+    @Test
+    fun `sources with no entries are rejected`() {
+        assertFailsWith<IllegalArgumentException> {
+            Bibliographer(
+                style = "ieee",
+                source = BibliographySource("% no entries here", BibliographyFormat.BIBTEX),
+            )
+        }
     }
 }
