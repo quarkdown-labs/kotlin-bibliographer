@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-09-12
+
 ## [0.4.0] - 2026-09-12
 
 ### Added
@@ -21,7 +23,9 @@
 
 Initial commit
 
-[Unreleased]: https://github.com/quarkdown-labs/kotlin-bibliographer/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/quarkdown-labs/kotlin-bibliographer/compare/v0.4.1...HEAD
+
+[0.4.1]: https://github.com/quarkdown-labs/kotlin-bibliographer/compare/v0.4.0...v0.4.1
 
 [0.4.0]: https://github.com/quarkdown-labs/kotlin-bibliographer/compare/v0.3.0...v0.4.0
 
