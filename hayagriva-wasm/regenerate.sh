@@ -27,9 +27,8 @@ if [ "$(uname -s)" != "Linux" ]; then
         rust:1.92.0 ./regenerate.sh "$@"
 fi
 
-# `--check` additionally verifies (after regenerating) that the vendored
-# package matches what is committed — the CI drift check. Keeping the check
-# here, next to PKG_DIR, means the workflow never hardcodes the package path.
+# `--check` additionally verifies, after regenerating, that the vendored
+# package matches what is committed (the CI drift check).
 CHECK=false
 if [ "${1:-}" = "--check" ]; then
     CHECK=true
@@ -40,8 +39,8 @@ fi
 WASM_PACK_VERSION="0.15.0"
 
 # The vendoring target: an npm-shaped package directory, not a resources/
-# path — klib resources are not propagated to a consumer's linked output on
-# Kotlin 2.4.20, whereas npm dependencies are.
+# path, because klib resources are not propagated to a consumer's linked
+# output on Kotlin 2.4.20, whereas npm dependencies are.
 PKG_DIR="../src/wasmJsMain/npm/hayagriva-wasm"
 
 # --- 1. Toolchain -----------------------------------------------------------
@@ -53,9 +52,8 @@ if command -v wasm-pack >/dev/null 2>&1; then
     installed_wasm_pack_version="$(wasm-pack --version | awk '{print $2}')"
 fi
 if [ "$installed_wasm_pack_version" != "$WASM_PACK_VERSION" ]; then
-    # The prebuilt musl binary installs in seconds where available (Linux
-    # x86_64 — both CI and the container above); `cargo install` compiles
-    # for minutes and is only the fallback.
+    # The prebuilt musl binary installs in seconds on x86_64 Linux (CI and
+    # the container above); `cargo install` is the slow fallback.
     if [ "$(uname -m)" = "x86_64" ]; then
         tarball="wasm-pack-v$WASM_PACK_VERSION-x86_64-unknown-linux-musl"
         curl -sSfL "https://github.com/rustwasm/wasm-pack/releases/download/v$WASM_PACK_VERSION/$tarball.tar.gz" |
@@ -69,29 +67,22 @@ fi
 # rustc embeds absolute source paths into the binary; remap them to fixed
 # virtual roots so the output is byte-identical across machines.
 export RUSTFLAGS="${RUSTFLAGS:-} --remap-path-prefix=${CARGO_HOME:-$HOME/.cargo}=/cargo --remap-path-prefix=$PWD=/build"
-# `--no-pack` skips wasm-pack's own package.json generation: that output
-# embeds the installed wasm-pack version and isn't shaped the way we need
-# (no "type": "module", no loader.mjs entry point), so it would both be
-# non-deterministic across machines and wrong. Step 4 writes our own
-# deterministic package.json instead.
+# `--no-pack`: wasm-pack's generated package.json embeds the tool version
+# and lacks the "type"/entry-point shape this package needs; step 3 writes
+# a deterministic one.
 # `--release` already runs `wasm-opt` when available.
 wasm-pack build --target web --release --no-pack --out-name hayagriva_wasm
 
 # --- 3. Assemble the vendored package ---------------------------------------
-# Start from a clean directory so a file removed from `pkg/` (e.g. a .d.ts
-# wasm-pack stops emitting in a future version) doesn't linger as stale
-# vendored cruft.
+# Clean first, so files dropped from `pkg/` also disappear from the package.
 rm -rf "$PKG_DIR"
 mkdir -p "$PKG_DIR"
 
 cp pkg/hayagriva_wasm.js pkg/hayagriva_wasm_bg.wasm "$PKG_DIR/"
-# loader.mjs is hand-written source (hayagriva-wasm/js/loader.mjs), never
-# generated or edited by this script — only copied into place.
+# loader.mjs is hand-written source, only copied into place.
 cp js/loader.mjs "$PKG_DIR/"
 
-# wasm-bindgen's .d.ts outputs are optional artifacts of the target/profile
-# combination in use; vendor them when present so downstream TypeScript
-# consumers get types, without hard-failing when they are not produced.
+# wasm-bindgen's .d.ts outputs are optional; vendor them when present.
 dts_files=()
 for f in pkg/hayagriva_wasm.d.ts pkg/hayagriva_wasm_bg.wasm.d.ts; do
     if [ -f "$f" ]; then
@@ -108,8 +99,7 @@ if [ -z "$version" ]; then
     exit 1
 fi
 
-# `files` is listed in a fixed order (loader first, then wasm-bindgen's own
-# outputs, then any .d.ts) so re-running this script never reorders it.
+# Fixed `files` ordering keeps package.json byte-stable across runs.
 files_json="\"loader.mjs\", \"hayagriva_wasm.js\", \"hayagriva_wasm_bg.wasm\""
 for f in "${dts_files[@]}"; do
     files_json="$files_json, \"$f\""

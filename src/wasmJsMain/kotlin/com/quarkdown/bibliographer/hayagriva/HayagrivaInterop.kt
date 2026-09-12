@@ -66,15 +66,12 @@ internal fun pushString(
 internal fun jsonStringify(value: JsAny): String = js("JSON.stringify(value)")
 
 /**
- * Parses [json] and returns the result only if it is a JS array — the shared
- * guard in front of every array-shaped payload this backend receives.
+ * Parses [json] and returns the result only if it is a JS array.
  */
 internal fun parseJsonArrayOrNull(json: String): JsAny? = jsonParse(json)?.takeIf(::isJsArray)
 
 /**
  * Maps every element of a JS array with [transform], in index order.
- * Shared by this backend's JS-array traversals so the index loop is
- * written once.
  */
 internal inline fun <T> JsAny.mapElements(transform: (JsAny) -> T): List<T> =
     buildList {
@@ -84,9 +81,8 @@ internal inline fun <T> JsAny.mapElements(transform: (JsAny) -> T): List<T> =
     }
 
 /**
- * Serializes a list of strings as a JSON array, delegating to `JSON.stringify`
- * rather than hand-rolled string escaping, so arbitrary characters
- * (backslashes, quotes, control characters) round-trip correctly.
+ * Serializes a list of strings as a JSON array via `JSON.stringify`,
+ * so quotes, backslashes and control characters round-trip correctly.
  */
 internal fun stringsToJson(values: List<String>): String {
     val array = newJsArray()

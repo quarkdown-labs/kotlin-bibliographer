@@ -11,14 +11,14 @@ import com.quarkdown.bibliographer.token.BibliographyToken
 
 /**
  * A [Bibliographer] powered by [hayagriva](https://github.com/typst/hayagriva),
- * compiled to WebAssembly and vendored with this library — no external
+ * compiled to WebAssembly and vendored with this library; no external
  * dependencies are required at build or run time.
  *
  * Current limitations of this backend:
  * - Only [BibliographyFormat.BIBTEX] and [BibliographyFormat.CSL_JSON] sources are supported.
  *
  * wasmJs (and JavaScript in general) runs single-threaded, so [Bibliographer]'s
- * "thread-safely" contract is trivially satisfied here — there is no concurrent access to guard against.
+ * "thread-safely" contract is trivially satisfied here: there is no concurrent access to guard against.
  *
  * @param style the XML content of a CSL style definition, or the Zotero id of a style
  *              embedded in the binding's archive (a superset of `StyleCatalog`;

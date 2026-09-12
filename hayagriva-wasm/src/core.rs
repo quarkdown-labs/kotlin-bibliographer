@@ -25,12 +25,10 @@ fn locales() -> &'static [Locale] {
 /// Resolves a style argument: CSL XML content is parsed directly, anything
 /// else is looked up in hayagriva's embedded style archive.
 ///
-/// Archive names are tried in their Zotero URL form first: the friendly
-/// aliases (`"chicago-notes"`, `"springer-basic"`, …) sometimes point at a
-/// *different* style file than the identically-named Zotero id, while the
-/// URL form matches Zotero ids exactly — which is what keeps by-name
-/// resolution consistent with the JVM backend, whose processor resolves
-/// Zotero ids.
+/// The Zotero URL form is tried first: hayagriva's friendly aliases
+/// (`"chicago-notes"`, `"springer-basic"`, ...) can point at a different
+/// style file than the identically-named Zotero id, and matching Zotero ids
+/// exactly keeps by-name resolution consistent with the JVM backend.
 fn resolve_style(style: &str) -> Result<IndependentStyle, String> {
     if style.trim_start().starts_with('<') {
         return IndependentStyle::from_xml(style).map_err(|e| format!("Invalid CSL style: {e}"));
@@ -65,17 +63,12 @@ impl SourceFormat {
 /// The parsed bibliography, in whichever native representation its source
 /// format produces.
 ///
-/// hayagriva 0.10.1 has no conversion from `citationberg::json::Item`
-/// (csl-json's item type) to hayagriva's own `Entry` — the two are
-/// independent implementations of hayagriva's internal (crate-private)
-/// `EntryLike` trait, both accepted directly by the generic rendering
-/// pipeline (`CitationItem`, `CitationRequest`, `BibliographyDriver<T>`).
-/// So rather than converting csl-json into `Entry` (which would require
-/// hand-rolling a `Kind`-to-`EntryType` taxonomy mapping hayagriva itself
-/// doesn't provide, with all its lossy edge cases),
-/// each source format keeps its own native item type here, and
-/// [`Bibliographer::render`] dispatches on this enum with one concrete driver
-/// set-up per branch.
+/// hayagriva 0.10.1 cannot convert `citationberg::json::Item` (csl-json's
+/// item type) into its own `Entry`; both implement its crate-private
+/// `EntryLike` trait and are accepted directly by the generic rendering
+/// pipeline. Each source format therefore keeps its native item type, and
+/// [`Bibliographer::render`] dispatches on this enum with one concrete
+/// driver set-up per branch.
 enum Entries {
     Bibliography(Vec<Entry>),
     CslJson(Vec<CslJsonItem>),
@@ -84,10 +77,9 @@ enum Entries {
 pub struct Bibliographer {
     style: IndependentStyle,
     entries: Entries,
-    /// The citation key of every entry, in source order — index `i` here is
-    /// index `i` in [`Entries`], which is what [`Self::resolve`] relies on to
-    /// look up entries without knowing which source format is in play.
-    /// Computed once at construction; entries never change afterwards.
+    /// The citation key of every entry, in source order: index `i` matches
+    /// index `i` in [`Entries`], which [`Self::resolve`] relies on.
+    /// Computed once at construction.
     keys: Vec<String>,
     locale: Option<LocaleCode>,
 }
@@ -110,14 +102,9 @@ impl Bibliographer {
                     })?
                     .into_iter()
                     .collect();
-                // biblatex::Bibliography::parse only recognizes `@`-prefixed
-                // entries and silently ignores everything else (verified:
-                // parsing "not bibtex {{{" returns `Ok` with zero entries,
-                // not a `ParseError` — there is no top-level "this doesn't
-                // look like BibTeX" check in biblatex 0.12.0). A source that
-                // yields no citable entries is treated as invalid input here
-                // so the wrapper still surfaces a descriptive error for
-                // garbage input, per the fixed test semantics.
+                // biblatex silently skips anything that is not an `@`-prefixed
+                // entry, parsing garbage to zero entries, so an empty result
+                // is treated as invalid input.
                 if parsed.is_empty() {
                     return Err("Invalid BibTeX source: no entries found".to_string());
                 }
@@ -130,11 +117,8 @@ impl Bibliographer {
                     return Err("Invalid CSL-JSON source: no entries found".to_string());
                 }
                 // CSL-JSON requires an `id` on every item, and hayagriva uses
-                // it as the citation key. An item without one could neither be
-                // cited nor matched to its bibliography entry, and letting it
-                // through would desynchronize `citation_keys` from the rendered
-                // bibliography, so it is rejected outright rather than silently
-                // dropped.
+                // it as the citation key: an item without one can neither be
+                // cited nor matched to its bibliography entry.
                 if let Some(position) = parsed.iter().position(|item| item.id().is_none()) {
                     return Err(format!(
                         "Invalid CSL-JSON source: item at index {position} has no \"id\""
@@ -153,8 +137,6 @@ impl Bibliographer {
                 items.iter().filter_map(|i| i.id().map(|id| id.to_string())).collect()
             }
         };
-        // citationberg::LocaleCode is a plain tuple struct (no `From<&str>`
-        // impl in citationberg 0.7.0), so it is constructed directly.
         let locale = locale.map(|s| LocaleCode(s.to_string()));
         Ok(Self { style, entries, keys, locale })
     }
@@ -219,31 +201,20 @@ impl Bibliographer {
     /// Runs the CSL machinery over the whole bibliography, optionally adding a
     /// visible citation for the entries at the given indices.
     ///
-    /// Both [`Entries`] variants drive the same logic, but it has to be
-    /// *expanded* per variant rather than called: hayagriva's `EntryLike`
-    /// trait, which `BibliographyDriver`, `CitationRequest` and `CitationItem`
-    /// are all generic over, is not exported, so no bound naming it can be
-    /// written here and no generic function can be shared between the two item
-    /// types. Hence the macro: it keeps one copy of the logic, and each
-    /// expansion is type-checked against its own concrete item type. Only the
-    /// driver set-up needs this treatment — [`Rendered`] is not generic, so
-    /// everything downstream of it is ordinary shared code.
+    /// hayagriva's `EntryLike` trait (which the driver types are generic
+    /// over) is not exported, so the shared driver set-up is expanded once
+    /// per [`Entries`] variant through this macro, each expansion
+    /// type-checked against its own item type. [`Rendered`] is not generic,
+    /// so everything downstream is ordinary shared code.
     ///
-    /// The leading citation is hidden: it registers every entry with the driver
-    /// without contributing anything to the rendered output. hayagriva numbers
-    /// entries in the order it first encounters them across all citations, so
-    /// without it the number an entry gets would depend on which keys a given
-    /// [`Self::citation`] call happens to ask for — citing only the second entry
-    /// would render `[1]`, contradicting its own `[2]` bibliography label.
-    /// Registering them all makes numbering a property of the bibliography,
-    /// matching the JVM backend, which hands citeproc every item the same way.
+    /// The leading citation is hidden: it registers every entry without
+    /// contributing output. hayagriva numbers entries in first-encounter
+    /// order, so registering them all makes numbering a property of the
+    /// whole bibliography, matching the JVM backend and the entry labels.
     ///
-    /// Hidden items are excluded from the output and from ibid detection, but
-    /// they do mark their entries as already seen, so `position="first"` tests
-    /// false for every citation. That is an acceptable trade: this API renders
-    /// each citation in isolation, with no document context, so
-    /// first-versus-subsequent is not knowable either way, whereas citation
-    /// numbers are — and must agree with the bibliography.
+    /// Hidden items mark their entries as seen, so `position="first"` tests
+    /// false for every citation; this API renders citations in isolation,
+    /// where first-versus-subsequent is unknowable anyway.
     fn render(&self, cited: Option<&[usize]>) -> Rendered {
         macro_rules! render_over {
             ($entries:expr) => {{
@@ -252,8 +223,6 @@ impl Bibliographer {
                     CitationRequest::new(items, &self.style, self.locale.clone(), locales(), None)
                 };
                 let mut driver = BibliographyDriver::new();
-                // `CitationItem` has private fields, so `hidden` is set on the
-                // constructed item rather than through struct-update syntax.
                 let registration = entries
                     .iter()
                     .map(|entry| {

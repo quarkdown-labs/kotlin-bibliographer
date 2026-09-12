@@ -1,9 +1,8 @@
 //! Maps hayagriva's rendered [`ElemChildren`] tree onto the flat token JSON
 //! the Kotlin side decodes into `BibliographyToken`s.
 //!
-//! The wire format is deliberately minimal — a flat array of tokens, where
-//! formatting is expressed by decorator nesting, mirroring
-//! `BibliographyToken.Formatted`:
+//! The wire format is a flat array of tokens, where formatting is expressed
+//! by decorator nesting, mirroring `BibliographyToken.Formatted`:
 //!
 //! ```json
 //! [{"kind": "text",   "text": "Einstein, A. "},
@@ -24,8 +23,8 @@ pub fn to_tokens(children: &ElemChildren) -> Vec<Value> {
     out
 }
 
-/// Renders a single element child — such as a bibliography item's
-/// second-field-align label — as plain, unformatted text.
+/// Renders a single element child (such as a bibliography item's
+/// second-field-align label) as plain, unformatted text.
 pub fn child_to_plain_text(child: &ElemChild) -> String {
     let mut out = String::new();
     push_plain_text(child, &mut out);
@@ -58,7 +57,7 @@ fn push_child(child: &ElemChild, out: &mut Vec<Value>) {
         })),
         // Math chunks, which hayagriva hands to the consumer as raw markup.
         // There is no math token on the Kotlin side, so the source is kept
-        // verbatim as text rather than dropped.
+        // verbatim as text.
         ElemChild::Markup(markup) => {
             if !markup.is_empty() {
                 out.push(text(markup));

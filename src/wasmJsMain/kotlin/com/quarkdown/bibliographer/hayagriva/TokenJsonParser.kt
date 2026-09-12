@@ -22,7 +22,7 @@ internal object TokenJsonParser {
         )
 
     fun parseTokens(json: String): List<BibliographyToken> {
-        // The engine signals an empty render as "" rather than "[]".
+        // The engine signals an empty render as an empty string.
         if (json.isEmpty()) return emptyList()
         return parseJsonArrayOrNull(json)?.let(::parseTokensArray).orEmpty()
     }
