@@ -2,9 +2,11 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-12
+
 ### Changed
 
-- The style catalog is now embedded into a single source of truth.
+-   The style catalog is now embedded into a single source of truth.
 
 ## [0.4.2] - 2026-09-12
 
@@ -29,7 +31,9 @@
 
 Initial commit
 
-[Unreleased]: https://github.com/quarkdown-labs/kotlin-bibliographer/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/quarkdown-labs/kotlin-bibliographer/compare/v0.5.0...HEAD
+
+[0.5.0]: https://github.com/quarkdown-labs/kotlin-bibliographer/compare/v0.4.2...v0.5.0
 
 [0.4.2]: https://github.com/quarkdown-labs/kotlin-bibliographer/compare/v0.4.1...v0.4.2
 
