@@ -31,6 +31,57 @@ val hayagrivaWasmTarballUrl =
                 "hayagriva-wasm-v$hayagrivaWasmVersion/hayagriva-wasm-$hayagrivaWasmVersion.tgz"
         )
 
+// Embeds the StyleCatalog styles, vendored in styles/, as JVM resources, so
+// name resolution needs no styles dependency on the consumer's classpath.
+// The wasm binding embeds the same files (hayagriva-wasm/build.rs), keeping
+// the catalog byte-identical across platforms.
+interface ExtractCatalogStylesServices {
+    @get:Inject val fileSystem: FileSystemOperations
+}
+
+val extractCatalogStyles: TaskProvider<*> =
+    tasks.register("extractCatalogStyles") {
+        val catalogFile = file("src/commonMain/kotlin/com/quarkdown/bibliographer/StyleCatalog.kt")
+        val vendoredStyles = file("styles")
+        val outputDir = layout.buildDirectory.dir("generated/catalog-styles")
+        val stylesDir = "com/quarkdown/bibliographer/styles"
+        val services = objects.newInstance<ExtractCatalogStylesServices>()
+
+        inputs.dir(vendoredStyles)
+        inputs.file(catalogFile)
+        outputs.dir(outputDir)
+
+        doLast {
+            val outDir = outputDir.get().asFile
+            outDir.deleteRecursively()
+
+            val names =
+                Regex("^\\s*\"([a-z0-9-]+)\",$", RegexOption.MULTILINE)
+                    .findAll(catalogFile.readText())
+                    .map { it.groupValues[1] }
+                    .toSet()
+            check(names.isNotEmpty()) { "No style names parsed from ${catalogFile.name}" }
+
+            // StyleCatalog.kt and styles/ must stay in lockstep, in both directions.
+            val vendored =
+                vendoredStyles
+                    .listFiles { file -> file.extension == "csl" }
+                    .orEmpty()
+                    .map { it.nameWithoutExtension }
+                    .toSet()
+            val missing = names - vendored
+            check(missing.isEmpty()) { "Catalog styles missing from styles/: ${missing.joinToString()}" }
+            val unlisted = vendored - names
+            check(unlisted.isEmpty()) { "styles/ contains styles not in StyleCatalog: ${unlisted.joinToString()}" }
+
+            services.fileSystem.copy {
+                from(vendoredStyles)
+                into(outDir.resolve(stylesDir))
+                include("*.csl")
+            }
+        }
+    }
+
 kotlin {
     explicitApi()
     jvmToolchain(11)
@@ -46,9 +97,12 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
-        jvmMain.dependencies {
-            api(libs.citeproc.java)
-            runtimeOnly(libs.csl.locales)
+        jvmMain {
+            resources.srcDir(extractCatalogStyles)
+            dependencies {
+                api(libs.citeproc.java)
+                runtimeOnly(libs.csl.locales)
+            }
         }
         jvmTest.dependencies {
             implementation(libs.csl.styles)

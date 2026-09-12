@@ -50,7 +50,9 @@ bibliographer.bibliography().forEach { entry ->
 
 ### Styles
 
-`style` accepts either a name from `StyleCatalog` (66 popular styles), or the XML content of any CSL style definition.
+`style` accepts either a name from `StyleCatalog` (67 popular styles), or the XML content of any CSL style definition.
+Catalog styles are embedded in each platform's artifact from the shared `styles/` directory,
+so a name resolves to identical XML everywhere, with no extra dependency.
 
 <details>
 <summary>The catalog styles</summary>
@@ -80,6 +82,7 @@ bibliographer.bibliography().forEach { entry ->
 - `bristol-university-press`
 - `cell`
 - `chicago-author-date`
+- `chicago-notes`
 - `chicago-notes-bibliography`
 - `chicago-shortened-notes-bibliography`
 - `copernicus-publications`
@@ -114,7 +117,7 @@ bibliographer.bibliography().forEach { entry ->
 - `springer-lecture-notes-in-computer-science`
 - `springer-mathphys-brackets`
 - `springer-socpsych-author-date`
-- `springer-vancouver-brackets`
+- `springer-vancouver`
 - `taylor-and-francis-chicago-author-date`
 - `taylor-and-francis-national-library-of-medicine`
 - `the-institution-of-engineering-and-technology`
@@ -140,10 +143,9 @@ fun convert(token: BibliographyToken): MyNode =
 
 ## Licensing notes
 
-The WASM artifact embeds locale data from the
-[CSL locales project](https://github.com/citation-style-language/locales)
-and the style catalog from the
-[CSL styles project](https://github.com/citation-style-language/styles)
-(via [hayagriva](https://github.com/typst/hayagriva)'s archive), both licensed under
-[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/); the test
-suites additionally embed the IEEE and APA styles under the same license.
+Every published artifact embeds the catalog styles from the
+[CSL styles project](https://github.com/citation-style-language/styles),
+and the WASM artifact additionally embeds locale data from the
+[CSL locales project](https://github.com/citation-style-language/locales);
+both are licensed under
+[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).

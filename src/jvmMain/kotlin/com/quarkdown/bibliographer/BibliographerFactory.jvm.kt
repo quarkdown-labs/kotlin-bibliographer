@@ -9,10 +9,11 @@ public actual fun Bibliographer(
     locale: String?,
 ): Bibliographer {
     requireCatalogStyle(style)
+    val styleXml = if (style.trimStart().startsWith("<")) style else catalogStyleXml(style)
     val bibliographer =
         try {
             CiteprocBibliographer.from(
-                style = style,
+                style = styleXml,
                 input = source.content.byteInputStream(),
                 filename = "source.${source.format.extension}",
                 locale = locale,
@@ -26,3 +27,14 @@ public actual fun Bibliographer(
     }
     return bibliographer
 }
+
+/**
+ * The XML content of a [StyleCatalog] style, embedded in this artifact, so name
+ * resolution needs no styles dependency on the consumer's classpath.
+ */
+private fun catalogStyleXml(name: String): String =
+    checkNotNull(
+        CiteprocBibliographer::class.java.getResourceAsStream("/com/quarkdown/bibliographer/styles/$name.csl"),
+    ) { "Catalog style \"$name\" is not embedded in the artifact." }
+        .reader()
+        .use { it.readText() }

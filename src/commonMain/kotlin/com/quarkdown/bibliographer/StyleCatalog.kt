@@ -5,9 +5,9 @@ package com.quarkdown.bibliographer
  * rendering from the same style definition on each platform.
  *
  * Each name is the style's [Zotero](https://www.zotero.org/styles) id.
- * The catalog is deliberately the set supported *everywhere*: the JVM backend
- * resolves these ids from the classpath styles artifact, while the WASM
- * backend embeds the same style definitions in its binary.
+ * Every platform artifact embeds the same style definitions, vendored in the
+ * repository's `styles/` directory, so a catalog name resolves to identical
+ * XML everywhere with no extra dependency.
  *
  * Styles outside the catalog can always be used by passing the XML content
  * of their definition to [Bibliographer] instead of a name.
@@ -41,6 +41,7 @@ public object StyleCatalog {
             "bristol-university-press",
             "cell",
             "chicago-author-date",
+            "chicago-notes",
             "chicago-notes-bibliography",
             "chicago-shortened-notes-bibliography",
             "copernicus-publications",
@@ -75,7 +76,7 @@ public object StyleCatalog {
             "springer-lecture-notes-in-computer-science",
             "springer-mathphys-brackets",
             "springer-socpsych-author-date",
-            "springer-vancouver-brackets",
+            "springer-vancouver",
             "taylor-and-francis-chicago-author-date",
             "taylor-and-francis-national-library-of-medicine",
             "the-institution-of-engineering-and-technology",
