@@ -12,24 +12,16 @@ plugins {
 group = "com.quarkdown.bibliographer"
 version = file("version.txt").readText().trim()
 
-// The vendored hayagriva binding's version, kept equal to the wrapper crate's
-// version by regenerate.sh.
-val hayagrivaWasmVersion =
-    Regex("\"version\": \"([^\"]+)\"")
-        .find(file("src/wasmJsMain/npm/hayagriva-wasm/package.json").readText())!!
-        .groupValues[1]
-
 // KGP strips directory npm dependencies from published metadata, so remote
-// publications must resolve the binding from a public tarball URL instead.
-// The release workflow passes -PhayagrivaWasmFromRelease=true; local builds
-// default to the vendored directory.
+// publications must resolve the binding from a public tarball URL instead:
+// the release workflow attaches the packed binding to the GitHub release and
+// passes both properties. Local builds default to the vendored directory.
 val hayagrivaWasmFromRelease = providers.gradleProperty("hayagrivaWasmFromRelease").isPresent
-val hayagrivaWasmTarballUrl =
-    providers.gradleProperty("hayagrivaWasmTarballUrl").orNull
-        ?: (
-            "https://github.com/quarkdown-labs/kotlin-bibliographer/releases/download/" +
-                "hayagriva-wasm-v$hayagrivaWasmVersion/hayagriva-wasm-$hayagrivaWasmVersion.tgz"
-        )
+val hayagrivaWasmTarballUrl: String by lazy {
+    checkNotNull(providers.gradleProperty("hayagrivaWasmTarballUrl").orNull) {
+        "-PhayagrivaWasmFromRelease also requires -PhayagrivaWasmTarballUrl"
+    }
+}
 
 // Embeds the StyleCatalog styles, vendored in styles/, as JVM resources, so
 // name resolution needs no styles dependency on the consumer's classpath.
