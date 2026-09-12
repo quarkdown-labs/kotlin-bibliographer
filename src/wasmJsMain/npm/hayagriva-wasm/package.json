@@ -4,8 +4,12 @@
   "type": "module",
   "main": "./loader.mjs",
   "module": "./loader.mjs",
+  "types": "./loader.d.ts",
   "exports": {
-    ".": "./loader.mjs"
+    ".": {
+      "types": "./loader.d.ts",
+      "default": "./loader.mjs"
+    }
   },
-  "files": ["loader.mjs", "hayagriva_wasm.js", "hayagriva_wasm_bg.wasm", "hayagriva_wasm.d.ts", "hayagriva_wasm_bg.wasm.d.ts"]
+  "files": ["loader.mjs", "loader.d.ts", "hayagriva_wasm.js", "hayagriva_wasm_bg.wasm", "hayagriva_wasm.d.ts", "hayagriva_wasm_bg.wasm.d.ts"]
 }

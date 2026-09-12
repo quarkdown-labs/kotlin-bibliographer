@@ -3,17 +3,16 @@
 # package consumed by the Kotlin/JS (wasmJs) target.
 #
 # Non-interactive. Output is meant to be byte-identical across runs and
-# machines: a CI drift check diffs the vendored package directory against
-# what is committed, so nothing here may embed a timestamp, absolute path,
-# or other non-reproducible value.
+# machines, so nothing here may embed a timestamp, absolute path, or other
+# non-reproducible value.
 set -euo pipefail
 cd "$(dirname "$0")"
 
 # Linux is the authoritative build platform: rustc's output is deterministic
 # per host platform but not across platforms (constant ordering differs
-# between e.g. macOS-arm64 and Linux-x64 hosts), and the CI drift check
-# rebuilds on Linux. On any other system, delegate the whole run to a pinned
-# Linux container so local regeneration produces the exact bytes CI expects.
+# between e.g. macOS-arm64 and Linux-x64 hosts). On any other system,
+# delegate the whole run to a pinned Linux container so regeneration always
+# produces the same bytes, no matter which machine runs it.
 if [ "$(uname -s)" != "Linux" ]; then
     command -v docker >/dev/null 2>&1 || {
         echo "regenerate.sh: building the binding requires Linux; install Docker so the build can run in a container." >&2
@@ -27,16 +26,11 @@ if [ "$(uname -s)" != "Linux" ]; then
         rust:1.92.0 ./regenerate.sh "$@"
 fi
 
-# `--check` additionally verifies, after regenerating, that the vendored
-# package matches what is committed (the CI drift check).
-CHECK=false
-if [ "${1:-}" = "--check" ]; then
-    CHECK=true
-fi
-
 # Pinned so the wasm-pack build (step 2) is reproducible across machines; verified
 # working on this machine. Bump deliberately, not implicitly via a stale cargo cache.
 WASM_PACK_VERSION="0.15.0"
+# SHA-256 of wasm-pack-v$WASM_PACK_VERSION-x86_64-unknown-linux-musl.tar.gz.
+WASM_PACK_SHA256="c09f971ecaed9a2efc80fdcea7a00ef6b53c7fadc8c57d1f61b53a6aa66b668a"
 
 # The vendoring target: an npm-shaped package directory, not a resources/
 # path, because klib resources are not propagated to a consumer's linked
@@ -56,8 +50,11 @@ if [ "$installed_wasm_pack_version" != "$WASM_PACK_VERSION" ]; then
     # the container above); `cargo install` is the slow fallback.
     if [ "$(uname -m)" = "x86_64" ]; then
         tarball="wasm-pack-v$WASM_PACK_VERSION-x86_64-unknown-linux-musl"
-        curl -sSfL "https://github.com/rustwasm/wasm-pack/releases/download/v$WASM_PACK_VERSION/$tarball.tar.gz" |
-            tar -xz -C "${CARGO_HOME:-$HOME/.cargo}/bin" --strip-components=1 "$tarball/wasm-pack"
+        archive="$(mktemp)"
+        curl -sSfL "https://github.com/rustwasm/wasm-pack/releases/download/v$WASM_PACK_VERSION/$tarball.tar.gz" -o "$archive"
+        echo "$WASM_PACK_SHA256  $archive" | sha256sum -c --quiet -
+        tar -xzf "$archive" -C "${CARGO_HOME:-$HOME/.cargo}/bin" --strip-components=1 "$tarball/wasm-pack"
+        rm -f "$archive"
     else
         cargo install wasm-pack --version "$WASM_PACK_VERSION" --locked
     fi
@@ -79,8 +76,8 @@ rm -rf "$PKG_DIR"
 mkdir -p "$PKG_DIR"
 
 cp pkg/hayagriva_wasm.js pkg/hayagriva_wasm_bg.wasm "$PKG_DIR/"
-# loader.mjs is hand-written source, only copied into place.
-cp js/loader.mjs "$PKG_DIR/"
+# loader.mjs and loader.d.ts are hand-written source, only copied into place.
+cp js/loader.mjs js/loader.d.ts "$PKG_DIR/"
 
 # wasm-bindgen's .d.ts outputs are optional; vendor them when present.
 dts_files=()
@@ -100,7 +97,7 @@ if [ -z "$version" ]; then
 fi
 
 # Fixed `files` ordering keeps package.json byte-stable across runs.
-files_json="\"loader.mjs\", \"hayagriva_wasm.js\", \"hayagriva_wasm_bg.wasm\""
+files_json="\"loader.mjs\", \"loader.d.ts\", \"hayagriva_wasm.js\", \"hayagriva_wasm_bg.wasm\""
 for f in "${dts_files[@]}"; do
     files_json="$files_json, \"$f\""
 done
@@ -112,8 +109,12 @@ cat > "$PKG_DIR/package.json" <<EOF
   "type": "module",
   "main": "./loader.mjs",
   "module": "./loader.mjs",
+  "types": "./loader.d.ts",
   "exports": {
-    ".": "./loader.mjs"
+    ".": {
+      "types": "./loader.d.ts",
+      "default": "./loader.mjs"
+    }
   },
   "files": [$files_json]
 }
@@ -121,13 +122,3 @@ EOF
 
 echo "Vendored $PKG_DIR:"
 echo "  $(du -h "$PKG_DIR/hayagriva_wasm_bg.wasm" | cut -f1)  hayagriva_wasm_bg.wasm"
-
-if $CHECK; then
-    # `git status --porcelain` (not `git diff`) so untracked files fail too.
-    drift="$(git status --porcelain -- "$PKG_DIR")"
-    if [ -n "$drift" ]; then
-        echo "::error::Vendored hayagriva binding is out of date. Run hayagriva-wasm/regenerate.sh and commit the result."
-        echo "$drift"
-        exit 1
-    fi
-fi

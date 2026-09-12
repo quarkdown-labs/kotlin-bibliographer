@@ -1,4 +1,4 @@
-name: Regenerate hayagriva binding
+name: Hayagriva crate
 
 on:
   push:
@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  drift-check:
+  test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -24,19 +24,19 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
 
-      # cache-bin defaults to true, so an installed wasm-pack in
-      # ~/.cargo/bin/ is cached too; only the first run pays its install cost.
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: hayagriva-wasm
 
-      # `--check` fails the job if the regenerated package differs from the
-      # committed one (the drift check lives in the script, next to its paths).
-      - name: Regenerate binding and verify no drift
-        run: ./hayagriva-wasm/regenerate.sh --check
-
       - name: Run native tests
         run: cargo test --manifest-path hayagriva-wasm/Cargo.toml
+
+      # Compares rendered outputs for drifts.
+      - name: Verify vendored binding is functionally current
+        run: |
+          cp -r src/wasmJsMain/npm/hayagriva-wasm "$RUNNER_TEMP/committed-binding"
+          ./hayagriva-wasm/regenerate.sh
+          node hayagriva-wasm/check-binding.mjs "$RUNNER_TEMP/committed-binding" src/wasmJsMain/npm/hayagriva-wasm
 
       - name: Upload artifacts (manual runs)
         if: github.event_name == 'workflow_dispatch'

@@ -116,13 +116,22 @@ impl Bibliographer {
                 if parsed.is_empty() {
                     return Err("Invalid CSL-JSON source: no entries found".to_string());
                 }
-                // CSL-JSON requires an `id` on every item, and hayagriva uses
-                // it as the citation key: an item without one can neither be
-                // cited nor matched to its bibliography entry.
-                if let Some(position) = parsed.iter().position(|item| item.id().is_none()) {
-                    return Err(format!(
-                        "Invalid CSL-JSON source: item at index {position} has no \"id\""
-                    ));
+                // CSL-JSON requires a unique `id` on every item, and hayagriva
+                // uses it as the citation key: an item without one can neither
+                // be cited nor matched to its bibliography entry, and a
+                // repeated one is unciteable past its first occurrence.
+                let mut seen = std::collections::HashSet::new();
+                for (position, item) in parsed.iter().enumerate() {
+                    let Some(id) = item.id() else {
+                        return Err(format!(
+                            "Invalid CSL-JSON source: item at index {position} has no \"id\""
+                        ));
+                    };
+                    if !seen.insert(id.to_string()) {
+                        return Err(format!(
+                            "Invalid CSL-JSON source: duplicate item id \"{id}\""
+                        ));
+                    }
                 }
                 Entries::CslJson(parsed)
             }
@@ -370,6 +379,15 @@ mod tests {
     #[test]
     fn csl_json_items_without_an_id_are_rejected() {
         let source = r#"[{"type": "book", "title": "Anonymous"}]"#;
+        assert!(Bibliographer::new(&ieee(), source, SourceFormat::CslJson, None).is_err());
+    }
+
+    #[test]
+    fn csl_json_duplicate_ids_are_rejected() {
+        let source = r#"[
+            {"id": "dup", "type": "book", "title": "First"},
+            {"id": "dup", "type": "book", "title": "Second"}
+        ]"#;
         assert!(Bibliographer::new(&ieee(), source, SourceFormat::CslJson, None).is_err());
     }
 
