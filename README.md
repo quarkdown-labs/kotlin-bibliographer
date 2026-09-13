@@ -51,8 +51,6 @@ bibliographer.bibliography().forEach { entry ->
 ### Styles
 
 `style` accepts either a name from `StyleCatalog` (67 popular styles), or the XML content of any CSL style definition.
-Catalog styles are embedded in each platform's artifact from the shared `styles/` directory,
-so a name resolves to identical XML everywhere, with no extra dependency.
 
 <details>
 <summary>The catalog styles</summary>
