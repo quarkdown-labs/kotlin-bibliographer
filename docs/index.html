@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>kotlin-bibliographer demo</title>
+</head>
+<body>
+    <h1>kotlin-bibliographer demo</h1>
+    <p>
+        This page runs <a href="https://github.com/quarkdown-labs/kotlin-bibliographer">kotlin-bibliographer</a>'s
+        <code>wasmJs</code> target in your browser: the Kotlin Multiplatform API, backed by the
+        <a href="https://github.com/typst/hayagriva">hayagriva</a> WebAssembly binding, with the full embedded
+        <a href="https://github.com/quarkdown-labs/kotlin-bibliographer/tree/main/styles">style catalog</a>.
+        Nothing leaves your browser.
+    </p>
+
+    <form id="form">
+        <p>
+            <label for="format">Source format</label><br>
+            <select id="format"></select>
+        </p>
+        <p>
+            <label for="source">Bibliography source</label><br>
+            <textarea id="source" rows="16" cols="80" spellcheck="false"></textarea>
+        </p>
+        <p>
+            <label for="style">Style</label>
+            <select id="style"></select>
+        </p>
+        <p>
+            <label for="locale">Locale (optional, e.g. <code>de-DE</code>)</label>
+            <input id="locale" size="8">
+        </p>
+        <p>
+            <label for="keys">Citation keys (comma-separated)</label>
+            <input id="keys" value="einstein, hawking" size="30">
+        </p>
+        <p>
+            <button type="submit">Render</button>
+        </p>
+    </form>
+
+    <hr>
+
+    <p id="error" hidden></p>
+
+    <section id="output" hidden>
+        <h2>Citation</h2>
+        <p id="citation"></p>
+
+        <h2>Bibliography</h2>
+        <div id="bibliography"></div>
+
+        <h2>Available keys</h2>
+        <p id="available-keys"></p>
+    </section>
+
+    <script type="application/javascript" src="bibliographer-demo.js"></script>
+</body>
+</html>
