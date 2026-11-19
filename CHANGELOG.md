@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-19
+
 ### Changed
 
 -   Bumped citeproc-java to 3.5.3.
@@ -35,7 +37,9 @@
 
 Initial commit
 
-[Unreleased]: https://github.com/quarkdown-labs/kotlin-bibliographer/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/quarkdown-labs/kotlin-bibliographer/compare/v0.5.1...HEAD
+
+[0.5.1]: https://github.com/quarkdown-labs/kotlin-bibliographer/compare/v0.5.0...v0.5.1
 
 [0.5.0]: https://github.com/quarkdown-labs/kotlin-bibliographer/compare/v0.4.2...v0.5.0
 
