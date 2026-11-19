@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.4.20"
-citeproc-java = "3.5.2"
+citeproc-java = "3.5.3"
 citationstyles = "26.2"
 ktlint = "14.2.0"
 ktlint-engine = "1.8.0"

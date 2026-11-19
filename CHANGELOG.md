@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+-   Bumped citeproc-java to 3.5.3.
+
 ## [0.5.0] - 2026-09-12
 
 ### Changed
